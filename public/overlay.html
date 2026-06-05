@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Sliding Puzzle</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+:root {
+  --bg:        #080b12;
+  --surface:   #0e1420;
+  --surface2:  #131a28;
+  --border:    rgba(100,160,255,0.15);
+  --accent:    #4af0c4;
+  --accent2:   #ff5e7e;
+  --accent3:   #ffc845;
+  --blue:      #5b9fff;
+  --text:      #e8eef8;
+  --muted:     rgba(200,220,255,0.4);
+  --glow-g:    0 0 20px rgba(74,240,196,0.4);
+  --glow-r:    0 0 20px rgba(255,94,126,0.5);
+  --glow-b:    0 0 16px rgba(91,159,255,0.35);
+  --grid-sz:   420px;
+  --gap:       4px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: transparent;
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--text);
+  width: 560px;
+  height: 720px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 10px;
+}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+.header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title-block { display: flex; flex-direction: column; gap: 1px; }
+
+.title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-shadow: var(--glow-g);
+  line-height: 1;
+}
+
+.subtitle {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.stats-block {
+  display: flex;
+  gap: 18px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  display: block;
+}
+
+.stat-value {
+  font-family: 'Orbitron', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+/* ── DIVIDER ─────────────────────────────────────────────── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), var(--accent), var(--border), transparent);
+  opacity: 0.6;
+}
+
+/* ── GRID WRAPPER ────────────────────────────────────────── */
+.grid-outer {
+  position: relative;
+  width: var(--grid-sz);
+  height: var(--grid-sz);
+  flex-shrink: 0;
+}
+
+.axis-labels-col {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  text-align: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+  letter-spacing: 1px;
+}
+
+.axis-labels-row {
+  position: absolute;
+  left: -20px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+/* corner glow decoration */
+.grid-outer::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(74,240,196,0.15), transparent 40%, rgba(91,159,255,0.1) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#grid {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: var(--gap);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.4);
+}
+
+/* ── CELLS ───────────────────────────────────────────────── */
+.cell {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  transition: box-shadow 0.25s, border-color 0.25s;
+}
+
+.cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.cell.blank {
+  background: rgba(8,11,18,0.8);
+}
+
+.cell.blank::after { display: none; }
+
+/* inner glow border for movable */
+.cell.movable {
+  box-shadow:
+    inset 0 0 0 2px var(--accent),
+    inset 0 0 16px rgba(74,240,196,0.15),
+    0 0 12px rgba(74,240,196,0.2);
+}
+
+.cell.movable .cell-label {
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--accent);
+}
+
+/* flash on move */
+.cell.just-moved {
+  animation: flash-move 0.5s ease forwards;
+}
+
+@keyframes flash-move {
+  0%   { box-shadow: inset 0 0 0 2px var(--accent2), inset 0 0 30px rgba(255,94,126,0.35); }
+  100% { box-shadow: none; }
+}
+
+.cell img {
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cell-label {
+  position: absolute;
+  bottom: 4px;
+  right: 5px;
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.45);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  z-index: 4;
+  transition: color 0.2s, text-shadow 0.2s;
+  letter-spacing: 0.5px;
+}
+
+/* ── TIMER ───────────────────────────────────────────────── */
+.timer-wrap {
+  width: var(--grid-sz);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.timer-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--blue), var(--accent));
+  transition: width 0.12s linear;
+  position: relative;
+}
+
+.timer-fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 12px;
+  background: rgba(255,255,255,0.6);
+  filter: blur(3px);
+  border-radius: 2px;
+}
+
+.timer-fill.urgent {
+  background: linear-gradient(90deg, #a00020, var(--accent2));
+  animation: urgentpulse 0.35s infinite alternate;
+}
+
+@keyframes urgentpulse {
+  from { opacity: 0.75; }
+  to   { opacity: 1; }
+}
+
+.timer-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 26px;
+  text-align: right;
+  transition: color 0.3s;
+}
+
+.timer-num.urgent { color: var(--accent2); text-shadow: var(--glow-r); }
+
+/* ── VOTES PANEL ─────────────────────────────────────────── */
+.votes-panel {
+  width: var(--grid-sz);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 14px;
+  min-height: 58px;
+}
+
+.votes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+.votes-title {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-family: 'Orbitron', monospace;
+}
+
+.vote-hint {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.vote-hint strong {
+  color: var(--accent3);
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+}
+
+.votes-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vote-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 60px;
+  flex: 1;
+}
+
+.vote-bar-track {
+  width: 100%;
+  height: 24px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.vote-bar-fill {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(180deg, var(--blue), rgba(91,159,255,0.4));
+  transition: height 0.3s ease;
+  border-radius: 3px 3px 0 0;
+}
+
+.vote-bar-fill.leading {
+  background: linear-gradient(180deg, var(--accent), rgba(74,240,196,0.4));
+  box-shadow: 0 0 8px rgba(74,240,196,0.4);
+}
+
+.vote-bar-count {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  z-index: 1;
+}
+
+.vote-bar-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.vote-bar-item.leading .vote-bar-label {
+  color: var(--accent);
+}
+
+.votes-empty {
+  font-size: 11px;
+  color: rgba(255,255,255,0.18);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* ── COMPLETE SCREEN ─────────────────────────────────────── */
+#complete-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(8,11,18,0.97);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 200;
+}
+
+#complete-screen.show {
+  display: flex;
+  animation: comp-in 0.7s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes comp-in {
+  from { opacity:0; transform: scale(0.93) translateY(10px); }
+  to   { opacity:1; transform: scale(1) translateY(0); }
+}
+
+.comp-badge {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: var(--accent3);
+  text-transform: uppercase;
+  border: 1px solid var(--accent3);
+  padding: 4px 14px;
+  border-radius: 3px;
+  text-shadow: 0 0 12px rgba(255,200,69,0.5);
+  box-shadow: 0 0 16px rgba(255,200,69,0.15);
+}
+
+.comp-title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 46px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-shadow: var(--glow-g), 0 0 60px rgba(74,240,196,0.2);
+  text-align: center;
+  line-height: 1;
+}
+
+.comp-meta {
+  display: flex;
+  gap: 32px;
+}
+
+.comp-stat {
+  text-align: center;
+}
+
+.comp-stat-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.comp-stat-lbl {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.lb-wrap {
+  width: 360px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.lb-head {
+  padding: 8px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.lb-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 16px;
+  border-bottom: 1px solid rgba(100,160,255,0.06);
+  transition: background 0.2s;
+}
+
+.lb-entry:last-child { border-bottom: none; }
+
+.lb-entry:nth-child(1) { background: rgba(255,200,69,0.06); }
+.lb-entry:nth-child(2) { background: rgba(180,180,180,0.04); }
+.lb-entry:nth-child(3) { background: rgba(180,100,50,0.04); }
+
+.lb-rank {
+  font-family: 'Orbitron', monospace;
+  font-size: 20px;
+  font-weight: 900;
+  min-width: 28px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.lb-entry:nth-child(1) .lb-rank { color: var(--accent3); text-shadow: 0 0 10px rgba(255,200,69,0.5); }
+.lb-entry:nth-child(2) .lb-rank { color: #c8c8d0; }
+.lb-entry:nth-child(3) .lb-rank { color: #cd8860; }
+
+.lb-name { flex:1; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
+.lb-votes {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="title-block">
+    <div class="title">SLIDEPUZZLE</div>
+    <div class="subtitle">Type !A1 · !B2 · !C3 to vote</div>
+  </div>
+  <div class="stats-block">
+    <div class="stat">
+      <span class="stat-label">Moves</span>
+      <span class="stat-value" id="stat-moves">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Time</span>
+      <span class="stat-value" id="stat-time">0:00</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- GRID -->
+<div class="grid-outer">
+  <div class="axis-labels-col"><div>A</div><div>B</div><div>C</div></div>
+  <div class="axis-labels-row"><div>1</div><div>2</div><div>3</div></div>
+  <div id="grid"></div>
+</div>
+
+<!-- TIMER -->
+<div class="timer-wrap">
+  <div class="timer-track">
+    <div class="timer-fill" id="timer-fill"></div>
+  </div>
+  <div class="timer-num" id="timer-num">20</div>
+</div>
+
+<!-- VOTES -->
+<div class="votes-panel">
+  <div class="votes-header">
+    <div class="votes-title">Live Votes</div>
+    <div class="vote-hint">Chat: <strong>!B2</strong></div>
+  </div>
+  <div class="votes-grid" id="votes-grid">
+    <div class="votes-empty">Waiting for vote window…</div>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div id="complete-screen">
+  <div class="comp-badge">Puzzle Complete</div>
+  <div class="comp-title">SOLVED!</div>
+  <div class="comp-meta">
+    <div class="comp-stat">
+      <div class="comp-stat-val" id="c-time">—</div>
+      <div class="comp-stat-lbl">Time</div>
+    </div>
+    <div class="comp-stat">
+      <div class="comp-stat-val" id="c-moves">—</div>
+      <div class="comp-stat-lbl">Moves</div>
+    </div>
+  </div>
+  <div class="lb-wrap">
+    <div class="lb-head">Top Contributors</div>
+    <div id="lb-body"></div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const GRID = 3;
+const socket = io();
+
+let board        = [];
+let emptyPos     = 8;
+let currentImage = null;
+let movableCells = [];
+let voteData     = {};   // { index: { label, count, firstTime } }
+let timerInterval = null;
+let timerEnd      = null;
+let timerDuration = 20000;
+let clockInterval = null;
+let roundStart    = null;
+
+// ── RENDER GRID ───────────────────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  for (let i = 0; i < GRID * GRID; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.id = `cell-${i}`;
+
+    const col = i % GRID;
+    const row = Math.floor(i / GRID);
+    const label = String.fromCharCode(65 + col) + (row + 1);
+    const tileVal = board[i];
+
+    if (tileVal === 0) {
+      cell.classList.add("blank");
+    } else {
+      if (currentImage) {
+        const img = document.createElement("img");
+        img.src = `/images/${currentImage}`;
+        img.draggable = false;
+        // Position the image slice correctly
+        const origIdx = tileVal - 1;
+        const oCol = origIdx % GRID;
+        const oRow = Math.floor(origIdx / GRID);
+        const pct = 100 / GRID; // 33.333...
+        img.style.width  = `${GRID * 100}%`;
+        img.style.height = `${GRID * 100}%`;
+        img.style.left   = `${-oCol * pct * GRID}%`;
+        img.style.top    = `${-oRow * pct * GRID}%`;
+        cell.appendChild(img);
+      }
+      const lbl = document.createElement("div");
+      lbl.className = "cell-label";
+      lbl.textContent = label;
+      cell.appendChild(lbl);
+    }
+
+    if (movableCells.includes(i)) cell.classList.add("movable");
+    grid.appendChild(cell);
+  }
+}
+
+// ── RENDER VOTES ──────────────────────────────────────────
+function renderVotes() {
+  const container = document.getElementById("votes-grid");
+  const entries = Object.values(voteData);
+
+  if (entries.length === 0) {
+    container.innerHTML = '<div class="votes-empty">Waiting for votes…</div>';
+    return;
+  }
+
+  const maxCount = Math.max(...entries.map(e => e.count), 1);
+
+  container.innerHTML = entries.map(e => {
+    const isLeading = e.count > 0 && e.count === maxCount;
+    const fillPct = (e.count / maxCount) * 100;
+    return `
+      <div class="vote-bar-item ${isLeading ? 'leading' : ''}">
+        <div class="vote-bar-track">
+          <div class="vote-bar-fill ${isLeading ? 'leading' : ''}" style="height:${fillPct}%"></div>
+          <div class="vote-bar-count">${e.count > 0 ? e.count : ''}</div>
+        </div>
+        <div class="vote-bar-label">!${e.label}</div>
+      </div>`;
+  }).join("");
+}
+
+// ── TIMER ─────────────────────────────────────────────────
+function startTimer(durationMs) {
+  if (timerInterval) clearInterval(timerInterval);
+  timerDuration = durationMs;
+  timerEnd = Date.now() + durationMs;
+  const fill = document.getElementById("timer-fill");
+  const num  = document.getElementById("timer-num");
+
+  timerInterval = setInterval(() => {
+    const remaining = Math.max(0, timerEnd - Date.now());
+    const pct  = (remaining / timerDuration) * 100;
+    fill.style.width = pct + "%";
+    const secs = Math.ceil(remaining / 1000);
+    num.textContent = secs;
+    const urgent = secs <= 5;
+    fill.classList.toggle("urgent", urgent);
+    num.classList.toggle("urgent", urgent);
+    if (remaining <= 0) clearInterval(timerInterval);
+  }, 100);
+}
+
+// ── CLOCK ─────────────────────────────────────────────────
+function startClock(from) {
+  roundStart = from || Date.now();
+  if (clockInterval) clearInterval(clockInterval);
+  clockInterval = setInterval(() => {
+    const el = Math.floor((Date.now() - roundStart) / 1000);
+    const m = Math.floor(el / 60);
+    const s = String(el % 60).padStart(2, "0");
+    document.getElementById("stat-time").textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+// ── SOCKET EVENTS ─────────────────────────────────────────
+socket.on("state_sync", d => {
+  board = d.board; emptyPos = d.emptyPos;
+  currentImage = d.currentImage;
+  movableCells = d.movable || [];
+  document.getElementById("stat-moves").textContent = d.moveCount;
+  // Rebuild voteData from movable labels (empty counts on reconnect)
+  voteData = {};
+  (d.movableLabels || []).forEach((lbl, i) => {
+    voteData[d.movable[i]] = { label: lbl, count: 0, firstTime: Infinity };
+  });
+  renderGrid(); renderVotes();
+  startClock(d.roundStartTime);
+});
+
+socket.on("new_puzzle", d => {
+  board = d.board; emptyPos = d.emptyPos;
+  currentImage = d.currentImage;
+  movableCells = []; voteData = {};
+  document.getElementById("stat-moves").textContent = "0";
+  document.getElementById("complete-screen").classList.remove("show");
+  renderGrid(); renderVotes();
+  startClock();
+});
+
+socket.on("vote_start", d => {
+  board = d.board; emptyPos = d.emptyPos;
+  movableCells = d.movable;
+  voteData = {};
+  d.movable.forEach((idx, i) => {
+    voteData[idx] = { label: d.movableLabels[i], count: 0, firstTime: Infinity };
+  });
+  renderGrid(); renderVotes();
+  startTimer(d.duration);
+});
+
+socket.on("vote_cast", d => {
+  if (voteData[d.index] !== undefined) {
+    voteData[d.index].count = d.currentCount;
+    if (voteData[d.index].firstTime === Infinity) voteData[d.index].firstTime = Date.now();
+  }
+  renderVotes();
+});
+
+socket.on("move_made", d => {
+  document.getElementById("stat-moves").textContent = d.moveCount;
+  // Flash the cell that moved (it's still at old position in DOM)
+  const el = document.getElementById(`cell-${d.movedCell}`);
+  if (el) el.classList.add("just-moved");
+  setTimeout(() => {
+    board = d.board; emptyPos = d.emptyPos;
+    movableCells = []; voteData = {};
+    renderGrid(); renderVotes();
+  }, 380);
+});
+
+socket.on("no_votes", d => {
+  board = d.board; emptyPos = d.emptyPos;
+  movableCells = []; voteData = {};
+  renderGrid(); renderVotes();
+});
+
+socket.on("puzzle_complete", d => {
+  movableCells = []; renderGrid();
+  const m = Math.floor(d.elapsed / 60);
+  const s = String(d.elapsed % 60).padStart(2, "0");
+  document.getElementById("c-time").textContent = `${m}:${s}`;
+  document.getElementById("c-moves").textContent = d.moveCount;
+  document.getElementById("lb-body").innerHTML = d.top5.map((u, i) => `
+    <div class="lb-entry">
+      <div class="lb-rank">${i + 1}</div>
+      <div class="lb-name">${u.name}</div>
+      <div class="lb-votes">${u.count} pts</div>
+    </div>`).join("");
+  document.getElementById("complete-screen").classList.add("show");
+});
+</script>
+</body>
+</html>
