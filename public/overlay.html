@@ -170,6 +170,7 @@ body {
   overflow: hidden;
   background: var(--surface);
   transition: box-shadow 0.25s, border-color 0.25s;
+  will-change: transform;
 }
 
 .cell::after {
@@ -203,6 +204,10 @@ body {
 /* flash on move */
 .cell.just-moved {
   animation: flash-move 0.5s ease forwards;
+}
+
+.cell.sliding {
+  z-index: 6;
 }
 
 @keyframes flash-move {
@@ -628,6 +633,7 @@ function renderGrid() {
     if (tileVal === 0) {
       cell.classList.add("blank");
     } else {
+      cell.dataset.tile = String(tileVal);
       if (currentImage) {
         const img = document.createElement("img");
         img.src = `/images/${currentImage}`;
@@ -759,14 +765,36 @@ socket.on("vote_cast", d => {
 
 socket.on("move_made", d => {
   document.getElementById("stat-moves").textContent = d.moveCount;
-  // Flash the cell that moved (it's still at old position in DOM)
-  const el = document.getElementById(`cell-${d.movedCell}`);
-  if (el) el.classList.add("just-moved");
+  const movingTile = board[d.movedCell];
+  const oldCell = document.querySelector(`[data-tile="${movingTile}"]`);
+  const oldRect = oldCell?.getBoundingClientRect();
+
+  board = d.board; emptyPos = d.emptyPos;
+  movableCells = []; voteData = {};
+  renderGrid(); renderVotes();
+
+  const newCell = document.querySelector(`[data-tile="${movingTile}"]`);
+  const newRect = newCell?.getBoundingClientRect();
+
+  if (!oldRect || !newRect || !newCell) return;
+
+  const dx = oldRect.left - newRect.left;
+  const dy = oldRect.top - newRect.top;
+
+  if (dx === 0 && dy === 0) return;
+
+  newCell.classList.add("sliding", "just-moved");
+  newCell.style.transition = "none";
+  newCell.style.transform = `translate(${dx}px, ${dy}px)`;
+  void newCell.offsetWidth;
+  newCell.style.transition = "transform 380ms cubic-bezier(0.22, 1, 0.36, 1)";
+  newCell.style.transform = "translate(0, 0)";
+
   setTimeout(() => {
-    board = d.board; emptyPos = d.emptyPos;
-    movableCells = []; voteData = {};
-    renderGrid(); renderVotes();
-  }, 380);
+    newCell.classList.remove("sliding", "just-moved");
+    newCell.style.transition = "";
+    newCell.style.transform = "";
+  }, 420);
 });
 
 socket.on("no_votes", d => {
