@@ -28,7 +28,12 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 
 body {
-  background: transparent;
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(74,240,196,0.2), transparent 20%),
+    radial-gradient(circle at 50% 44%, rgba(91,159,255,0.22), transparent 34%),
+    radial-gradient(circle at 50% 100%, rgba(8,15,28,0), rgba(8,15,28,0.78) 72%),
+    linear-gradient(180deg, rgba(8,13,22,0.12) 0%, rgba(8,13,22,0.56) 100%);
   font-family: 'Rajdhani', sans-serif;
   color: var(--text);
   width: 100vw;
@@ -40,6 +45,60 @@ body {
   justify-content: flex-start;
   padding: clamp(24px, 2.8vh, 40px) clamp(18px, 3vw, 34px) clamp(22px, 2vh, 30px);
   gap: clamp(10px, 1.1vh, 16px);
+  isolation: isolate;
+}
+
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+body::before {
+  background:
+    linear-gradient(rgba(120,170,255,0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120,170,255,0.055) 1px, transparent 1px),
+    radial-gradient(circle at 50% 38%, rgba(255,255,255,0.05), transparent 48%);
+  background-size: 68px 68px, 68px 68px, auto;
+  mask-image: radial-gradient(circle at 50% 42%, rgba(0,0,0,0.9), transparent 78%);
+  opacity: 0.42;
+}
+
+body::after {
+  background:
+    radial-gradient(circle at 50% 40%, rgba(74,240,196,0.22) 0%, transparent 18%),
+    radial-gradient(circle at 50% 48%, rgba(91,159,255,0.18), transparent 28%),
+    radial-gradient(circle at 14% 18%, rgba(91,159,255,0.12), transparent 18%),
+    radial-gradient(circle at 86% 18%, rgba(74,240,196,0.1), transparent 16%);
+  filter: blur(18px);
+}
+
+body > *:not(#complete-screen) {
+  position: relative;
+  z-index: 1;
+}
+
+body > *:not(.grid-outer):not(#complete-screen) {
+  backdrop-filter: blur(10px);
+}
+
+.header,
+.timer-wrap,
+.votes-panel {
+  background: linear-gradient(180deg, rgba(12,19,31,0.72), rgba(12,19,31,0.5));
+  border: 1px solid rgba(100,160,255,0.14);
+  box-shadow:
+    0 18px 50px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.header,
+.timer-wrap {
+  border-radius: 16px;
+  padding: 14px 18px;
 }
 
 /* ── HEADER ─────────────────────────────────────────────── */
@@ -457,7 +516,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: clamp(20px, 2.4vh, 36px);
+  padding: clamp(28px, 4vw, 56px);
   z-index: 200;
 }
 
@@ -474,13 +534,13 @@ body {
 .comp-badge {
   font-family: 'Orbitron', monospace;
   font-weight: 900;
-  font-size: clamp(16px, 1.2vw, 22px);
-  letter-spacing: 6px;
+  font-size: clamp(22px, 1.8vw, 34px);
+  letter-spacing: 8px;
   color: var(--accent3);
   text-transform: uppercase;
   border: 1px solid var(--accent3);
-  padding: 8px 18px;
-  border-radius: 3px;
+  padding: 12px 28px;
+  border-radius: 6px;
   text-shadow: 0 0 12px rgba(255,200,69,0.5);
   box-shadow: 0 0 16px rgba(255,200,69,0.15);
 }
@@ -488,8 +548,8 @@ body {
 .comp-title {
   font-family: 'Orbitron', monospace;
   font-weight: 900;
-  font-size: clamp(58px, 4.4vw, 84px);
-  letter-spacing: 3px;
+  font-size: clamp(86px, 9vw, 180px);
+  letter-spacing: 8px;
   color: var(--accent);
   text-shadow: var(--glow-g), 0 0 60px rgba(74,240,196,0.2);
   text-align: center;
@@ -498,44 +558,83 @@ body {
 
 .comp-meta {
   display: flex;
-  gap: 32px;
+  gap: clamp(24px, 3vw, 56px);
+  width: min(92vw, 1100px);
+  justify-content: center;
+}
+
+.comp-restart {
+  width: min(92vw, 1100px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px 26px;
+  background: rgba(91,159,255,0.12);
+  border: 1px solid rgba(91,159,255,0.24);
+  border-radius: 16px;
+  box-shadow: 0 0 30px rgba(91,159,255,0.12);
+}
+
+.comp-restart-label {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(20px, 1.5vw, 28px);
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.comp-restart-value {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(40px, 3vw, 64px);
+  font-weight: 900;
+  color: var(--blue);
+  text-shadow: var(--glow-b);
+  line-height: 1;
 }
 
 .comp-stat {
   text-align: center;
+  flex: 1;
+  padding: clamp(18px, 2vw, 30px);
+  background: rgba(14,20,32,0.86);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.24);
 }
 
 .comp-stat-val {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(34px, 2.6vw, 50px);
+  font-size: clamp(56px, 5vw, 96px);
   font-weight: 700;
   color: var(--text);
   line-height: 1;
 }
 
 .comp-stat-lbl {
-  font-size: clamp(14px, 1vw, 20px);
-  letter-spacing: 2px;
+  font-size: clamp(20px, 1.5vw, 30px);
+  letter-spacing: 4px;
   color: var(--muted);
   text-transform: uppercase;
-  margin-top: 2px;
+  margin-top: 8px;
 }
 
 .lb-wrap {
-  width: 360px;
-  background: var(--surface);
+  width: min(92vw, 1100px);
+  background: rgba(14,20,32,0.9);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 18px;
   overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.28);
 }
 
 .lb-head {
-  padding: 8px 16px;
+  padding: 18px 24px;
   background: var(--surface2);
   border-bottom: 1px solid var(--border);
   font-family: 'Orbitron', monospace;
-  font-size: clamp(14px, 1vw, 20px);
-  letter-spacing: 3px;
+  font-size: clamp(20px, 1.6vw, 30px);
+  letter-spacing: 4px;
   color: var(--muted);
   text-transform: uppercase;
   text-align: center;
@@ -544,8 +643,8 @@ body {
 .lb-entry {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 9px 16px;
+  gap: 18px;
+  padding: 18px 24px;
   border-bottom: 1px solid rgba(100,160,255,0.06);
   transition: background 0.2s;
 }
@@ -558,9 +657,9 @@ body {
 
 .lb-rank {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(28px, 2vw, 40px);
+  font-size: clamp(40px, 3vw, 64px);
   font-weight: 900;
-  min-width: 40px;
+  min-width: 72px;
   text-align: center;
   color: var(--muted);
 }
@@ -569,12 +668,22 @@ body {
 .lb-entry:nth-child(2) .lb-rank { color: #c8c8d0; }
 .lb-entry:nth-child(3) .lb-rank { color: #cd8860; }
 
-.lb-name { flex:1; font-size: clamp(20px, 1.5vw, 30px); font-weight: 600; letter-spacing: 0.5px; }
+.lb-name { flex:1; font-size: clamp(28px, 2.2vw, 44px); font-weight: 600; letter-spacing: 0.5px; }
 .lb-votes {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(16px, 1.2vw, 24px);
+  font-size: clamp(24px, 1.8vw, 34px);
   color: var(--accent);
   font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .comp-meta {
+    flex-direction: column;
+  }
+
+  .comp-title {
+    font-size: clamp(72px, 14vw, 140px);
+  }
 }
 </style>
 </head>
@@ -640,6 +749,10 @@ body {
       <div class="comp-stat-lbl">Moves</div>
     </div>
   </div>
+  <div class="comp-restart">
+    <div class="comp-restart-label">Next Puzzle In</div>
+    <div class="comp-restart-value" id="c-restart">30s</div>
+  </div>
   <div class="lb-wrap">
     <div class="lb-head">Top Contributors</div>
     <div id="lb-body"></div>
@@ -661,6 +774,7 @@ let timerEnd      = null;
 let timerDuration = 20000;
 let clockInterval = null;
 let roundStart    = null;
+let restartInterval = null;
 
 // ── RENDER GRID ───────────────────────────────────────────
 function renderGrid() {
@@ -767,6 +881,45 @@ function startClock(from) {
   }, 1000);
 }
 
+function stopRestartCountdown() {
+  if (restartInterval) {
+    clearInterval(restartInterval);
+    restartInterval = null;
+  }
+}
+
+function startRestartCountdown(restartAt) {
+  stopRestartCountdown();
+  const target = Number(restartAt) || (Date.now() + 30000);
+  const el = document.getElementById("c-restart");
+
+  const tick = () => {
+    const remaining = Math.max(0, target - Date.now());
+    el.textContent = `${Math.ceil(remaining / 1000)}s`;
+    if (remaining <= 0) stopRestartCountdown();
+  };
+
+  tick();
+  restartInterval = setInterval(tick, 250);
+}
+
+function showCompleteScreen(data) {
+  movableCells = [];
+  renderGrid();
+  const m = Math.floor(data.elapsed / 60);
+  const s = String(data.elapsed % 60).padStart(2, "0");
+  document.getElementById("c-time").textContent = `${m}:${s}`;
+  document.getElementById("c-moves").textContent = data.moveCount;
+  document.getElementById("lb-body").innerHTML = data.top5.map((u, i) => `
+    <div class="lb-entry">
+      <div class="lb-rank">${i + 1}</div>
+      <div class="lb-name">${u.name}</div>
+      <div class="lb-votes">${u.count} pts</div>
+    </div>`).join("");
+  startRestartCountdown(data.restartAt);
+  document.getElementById("complete-screen").classList.add("show");
+}
+
 // ── SOCKET EVENTS ─────────────────────────────────────────
 socket.on("state_sync", d => {
   board = d.board; emptyPos = d.emptyPos;
@@ -779,7 +932,14 @@ socket.on("state_sync", d => {
     voteData[d.movable[i]] = { label: lbl, count: 0, firstTime: Infinity };
   });
   renderGrid(); renderVotes();
-  startClock(d.roundStartTime);
+  if (d.puzzleComplete && d.completeStats) {
+    if (clockInterval) clearInterval(clockInterval);
+    showCompleteScreen(d.completeStats);
+  } else {
+    document.getElementById("complete-screen").classList.remove("show");
+    stopRestartCountdown();
+    startClock(d.roundStartTime);
+  }
 });
 
 socket.on("new_puzzle", d => {
@@ -788,6 +948,7 @@ socket.on("new_puzzle", d => {
   movableCells = []; voteData = {};
   document.getElementById("stat-moves").textContent = "0";
   document.getElementById("complete-screen").classList.remove("show");
+  stopRestartCountdown();
   renderGrid(); renderVotes();
   startClock();
 });
@@ -852,18 +1013,8 @@ socket.on("no_votes", d => {
 });
 
 socket.on("puzzle_complete", d => {
-  movableCells = []; renderGrid();
-  const m = Math.floor(d.elapsed / 60);
-  const s = String(d.elapsed % 60).padStart(2, "0");
-  document.getElementById("c-time").textContent = `${m}:${s}`;
-  document.getElementById("c-moves").textContent = d.moveCount;
-  document.getElementById("lb-body").innerHTML = d.top5.map((u, i) => `
-    <div class="lb-entry">
-      <div class="lb-rank">${i + 1}</div>
-      <div class="lb-name">${u.name}</div>
-      <div class="lb-votes">${u.count} pts</div>
-    </div>`).join("");
-  document.getElementById("complete-screen").classList.add("show");
+  if (clockInterval) clearInterval(clockInterval);
+  showCompleteScreen(d);
 });
 </script>
 </body>

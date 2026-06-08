@@ -8,6 +8,7 @@ const path = require("path");
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const YOUTUBE_CHANNEL_ID = "YOUR_CHANNEL_ID"; // ← replace with your YouTube channel ID
 const VOTE_DURATION_MS = 20000;               // 20 seconds per round
+const RESTART_DELAY_MS = 30000;               // 30 seconds after puzzle completion
 const GRID_SIZE = 3;
 const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;    // 9
 const TOTAL_TILES = TOTAL_CELLS - 1;          // 8
@@ -31,8 +32,10 @@ let roundStartTime = null;
 let votes = {};         // { cellIndex: { count, firstTime, voters: Set } }
 let allVoters = {};     // { username: contributionCount } for this puzzle
 let voteTimer = null;
+let restartTimer = null;
 let currentMovable = [];
 let puzzleComplete = false;
+let completeStats = null;
 
 // ─── IMAGE HELPERS ────────────────────────────────────────────────────────────
 function getImageList() {
@@ -87,6 +90,31 @@ function isSolved() {
     if (board[i] !== i + 1) return false;
   }
   return board[TOTAL_TILES] === 0;
+}
+
+function buildTop5() {
+  return Object.entries(allVoters)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, count]) => ({ name, count }));
+}
+
+function finishPuzzle() {
+  puzzleComplete = true;
+  completeStats = {
+    elapsed: Math.floor((Date.now() - roundStartTime) / 1000),
+    moveCount,
+    top5: buildTop5(),
+    restartAt: Date.now() + RESTART_DELAY_MS,
+  };
+
+  io.emit("puzzle_complete", completeStats);
+
+  if (restartTimer) clearTimeout(restartTimer);
+  restartTimer = setTimeout(() => {
+    restartTimer = null;
+    newPuzzle();
+  }, RESTART_DELAY_MS);
 }
 
 // ─── LABEL HELPERS ────────────────────────────────────────────────────────────
@@ -177,14 +205,7 @@ function resolveVotes() {
 
   // Check win AFTER emitting move
   if (isSolved()) {
-    puzzleComplete = true;
-    const elapsed = Math.floor((Date.now() - roundStartTime) / 1000);
-    const top5 = Object.entries(allVoters)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([name, count]) => ({ name, count }));
-
-    io.emit("puzzle_complete", { elapsed, moveCount, top5 });
+    finishPuzzle();
   } else {
     setTimeout(startVoteCycle, 1500);
   }
@@ -241,13 +262,18 @@ io.on("connection", (socket) => {
     puzzleComplete,
     movable: currentMovable,
     movableLabels: currentMovable.map(cellLabel),
+    completeStats,
   });
 });
 
 // ─── NEW PUZZLE ───────────────────────────────────────────────────────────────
 function newPuzzle() {
   if (voteTimer) clearTimeout(voteTimer);
+  if (restartTimer) clearTimeout(restartTimer);
+  voteTimer = null;
+  restartTimer = null;
   puzzleComplete = false;
+  completeStats = null;
   moveCount = 0;
   allVoters = {};
   votes = {};
@@ -325,17 +351,40 @@ function forceMove(input) {
   consoleOverride = false;
 
   if (isSolved()) {
-    puzzleComplete = true;
-    const elapsed = Math.floor((Date.now() - roundStartTime) / 1000);
-    const top5 = Object.entries(allVoters)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([name, count]) => ({ name, count }));
-    io.emit("puzzle_complete", { elapsed, moveCount, top5 });
-    console.log(`[Console] Puzzle solved! Time: ${elapsed}s, Moves: ${moveCount}`);
+    finishPuzzle();
+    console.log(`[Console] Puzzle solved! Time: ${completeStats.elapsed}s, Moves: ${moveCount}`);
   } else {
     setTimeout(startVoteCycle, 1500);
   }
+}
+
+function forceWin() {
+  if (puzzleComplete) {
+    console.log("[Console] Puzzle already complete. Type 'new' to start a new one.");
+    return;
+  }
+
+  if (voteTimer) { clearTimeout(voteTimer); voteTimer = null; }
+
+  board = Array.from({ length: TOTAL_CELLS }, (_, i) => (i < TOTAL_TILES ? i + 1 : 0));
+  emptyPos = TOTAL_TILES;
+  currentMovable = [];
+  votes = {};
+
+  io.emit("state_sync", {
+    board: [...board],
+    emptyPos,
+    currentImage,
+    moveCount,
+    roundStartTime,
+    puzzleComplete: false,
+    movable: currentMovable,
+    movableLabels: [],
+    completeStats: null,
+  });
+
+  finishPuzzle();
+  console.log(`[Console] Forced win! Time: ${completeStats.elapsed}s, Moves: ${moveCount}`);
 }
 
 function printBoard() {
@@ -360,10 +409,13 @@ process.stdin.on("data", d => {
     newPuzzle();
   } else if (cmd.startsWith("move ")) {
     forceMove(cmd);
+  } else if (cmd === "win") {
+    forceWin();
   } else if (cmd === "board") {
     printBoard();
   } else if (cmd === "help" || cmd === "?") {
     console.log("\nCommands:");
+    console.log("  win        - instantly end the current puzzle as solved");
     console.log("  new        — start a fresh puzzle with a new image");
     console.log("  move B2    — force-move cell B2 (skips chat votes)");
     console.log("  board      — print current board layout\n");
