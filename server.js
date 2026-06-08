@@ -387,6 +387,50 @@ function forceWin() {
   console.log(`[Console] Forced win! Time: ${completeStats.elapsed}s, Moves: ${moveCount}`);
 }
 
+function addConsoleVote(input) {
+  if (puzzleComplete) {
+    console.log("[Console] Puzzle already complete. Type 'new' to start a new one.");
+    return;
+  }
+
+  const match = input.match(/^vote\s+([A-Ca-c])([1-3])$/i);
+  if (!match) {
+    console.log("[Console] Usage: vote A2");
+    return;
+  }
+
+  if (!voteTimer || currentMovable.length === 0) {
+    console.log("[Console] There is no active vote window right now.");
+    return;
+  }
+
+  const col = match[1].toUpperCase().charCodeAt(0) - 65;
+  const row = parseInt(match[2], 10) - 1;
+  const cellIndex = row * GRID_SIZE + col;
+  const label = cellLabel(cellIndex);
+
+  if (!currentMovable.includes(cellIndex)) {
+    const validLabels = currentMovable.map(cellLabel).join(", ");
+    console.log(`[Console] Cell ${label} is not movable. Valid cells: ${validLabels}`);
+    return;
+  }
+
+  if (!votes[cellIndex]) {
+    votes[cellIndex] = { count: 0, firstTime: Date.now(), voters: new Set() };
+  }
+
+  votes[cellIndex].count++;
+
+  io.emit("vote_cast", {
+    username: "Console",
+    label,
+    index: cellIndex,
+    currentCount: votes[cellIndex].count,
+  });
+
+  console.log(`[Console] Added 1 vote to ${label}. Total votes: ${votes[cellIndex].count}`);
+}
+
 function printBoard() {
   console.log("\n  A  B  C");
   for (let r = 0; r < GRID_SIZE; r++) {
@@ -409,6 +453,8 @@ process.stdin.on("data", d => {
     newPuzzle();
   } else if (cmd.startsWith("move ")) {
     forceMove(cmd);
+  } else if (cmd.startsWith("vote ")) {
+    addConsoleVote(cmd);
   } else if (cmd === "win") {
     forceWin();
   } else if (cmd === "board") {
@@ -416,6 +462,7 @@ process.stdin.on("data", d => {
   } else if (cmd === "help" || cmd === "?") {
     console.log("\nCommands:");
     console.log("  win        - instantly end the current puzzle as solved");
+    console.log("  vote A2    - add 1 vote to a movable tile");
     console.log("  new        — start a fresh puzzle with a new image");
     console.log("  move B2    — force-move cell B2 (skips chat votes)");
     console.log("  board      — print current board layout\n");
