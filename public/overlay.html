@@ -76,12 +76,12 @@ body::after {
   filter: blur(18px);
 }
 
-body > *:not(#complete-screen) {
+body > *:not(#complete-screen):not(#celebration-layer) {
   position: relative;
   z-index: 1;
 }
 
-body > *:not(.grid-outer):not(#complete-screen) {
+body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   backdrop-filter: blur(10px);
 }
 
@@ -228,6 +228,18 @@ body > *:not(.grid-outer):not(#complete-screen) {
   background: var(--bg);
   border: 1px solid var(--border);
   box-shadow: 0 0 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.4);
+  transition: opacity 1.2s ease, filter 1.2s ease;
+}
+
+.grid-outer.solved-reveal #grid {
+  opacity: 0.12;
+  filter: saturate(0.7) blur(2px);
+}
+
+.grid-outer.solved-reveal .axis-labels-col,
+.grid-outer.solved-reveal .axis-labels-row {
+  opacity: 0.22;
+  transition: opacity 1.2s ease;
 }
 
 /* ── CELLS ───────────────────────────────────────────────── */
@@ -517,10 +529,34 @@ body > *:not(.grid-outer):not(#complete-screen) {
   background: rgba(8,11,18,0.97);
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: clamp(20px, 2.4vh, 36px);
-  padding: clamp(28px, 4vw, 56px);
+  padding: clamp(88px, 14vh, 184px) clamp(28px, 4vw, 56px) clamp(28px, 3vh, 44px);
   z-index: 200;
+}
+
+#complete-screen::before,
+#complete-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#complete-screen::before {
+  background:
+    radial-gradient(circle at 50% 40%, rgba(74,240,196,0.18), transparent 28%),
+    radial-gradient(circle at 50% 44%, rgba(91,159,255,0.16), transparent 38%);
+  filter: blur(18px);
+  opacity: 0;
+}
+
+#complete-screen::after {
+  background:
+    linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.08) 48%, transparent 52%),
+    linear-gradient(60deg, transparent 0%, rgba(74,240,196,0.05) 46%, transparent 54%);
+  mix-blend-mode: screen;
+  opacity: 0;
 }
 
 #complete-screen.show {
@@ -528,9 +564,133 @@ body > *:not(.grid-outer):not(#complete-screen) {
   animation: comp-in 0.7s cubic-bezier(0.16,1,0.3,1) both;
 }
 
+#complete-screen.show::before {
+  animation: complete-aura 1.4s ease-out forwards;
+}
+
+#complete-screen.show::after {
+  animation: complete-sheen 1.1s ease-out 0.1s forwards;
+}
+
 @keyframes comp-in {
   from { opacity:0; transform: scale(0.93) translateY(10px); }
   to   { opacity:1; transform: scale(1) translateY(0); }
+}
+
+@keyframes complete-aura {
+  0%   { opacity: 0; transform: scale(0.86); }
+  30%  { opacity: 1; }
+  100% { opacity: 0.78; transform: scale(1.06); }
+}
+
+@keyframes complete-sheen {
+  0%   { opacity: 0; transform: translateX(-24%) translateY(-8%) scale(1.2); }
+  35%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(24%) translateY(8%) scale(1); }
+}
+
+.confetti-burst {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 170;
+}
+
+.solved-image-reveal {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 4;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.solved-image-reveal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(74,240,196,0.14), transparent 32%),
+    linear-gradient(180deg, rgba(8,11,18,0.08), rgba(8,11,18,0.34));
+}
+
+.solved-image-reveal img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(100,160,255,0.24);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03) inset,
+    0 22px 60px rgba(0,0,0,0.32),
+    0 0 46px rgba(91,159,255,0.22);
+  transform: scale(0.94);
+  opacity: 0;
+}
+
+.solved-image-reveal.active {
+  animation: solved-image-wrap-in 1.3s ease-out forwards;
+}
+
+.solved-image-reveal.active img {
+  animation: solved-image-in 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes solved-image-wrap-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes solved-image-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: saturate(0.82) brightness(0.88);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: saturate(1) brightness(1);
+  }
+}
+
+.confetti-piece {
+  position: absolute;
+  top: var(--top);
+  left: var(--left);
+  width: var(--size);
+  height: calc(var(--size) * 2.5);
+  border-radius: 999px;
+  opacity: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.02)),
+    var(--color);
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--color) 55%, transparent),
+    0 0 24px color-mix(in srgb, var(--color) 28%, transparent);
+  transform: translate3d(0, 0, 0) rotate(0deg) scale(0.72);
+}
+
+.confetti-burst.active .confetti-piece {
+  animation: confetti-spray var(--dur) cubic-bezier(0.18, 0.72, 0.26, 1) var(--delay) forwards;
+}
+
+@keyframes confetti-spray {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(0.72);
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--spin)) scale(1);
+  }
 }
 
 .comp-badge {
@@ -545,6 +705,8 @@ body > *:not(.grid-outer):not(#complete-screen) {
   border-radius: 6px;
   text-shadow: 0 0 12px rgba(255,200,69,0.5);
   box-shadow: 0 0 16px rgba(255,200,69,0.15);
+  position: relative;
+  z-index: 2;
 }
 
 .comp-title {
@@ -556,6 +718,8 @@ body > *:not(.grid-outer):not(#complete-screen) {
   text-shadow: var(--glow-g), 0 0 60px rgba(74,240,196,0.2);
   text-align: center;
   line-height: 1;
+  position: relative;
+  z-index: 2;
 }
 
 .comp-meta {
@@ -563,6 +727,8 @@ body > *:not(.grid-outer):not(#complete-screen) {
   gap: clamp(24px, 3vw, 56px);
   width: min(92vw, 1100px);
   justify-content: center;
+  position: relative;
+  z-index: 2;
 }
 
 .comp-restart {
@@ -576,6 +742,8 @@ body > *:not(.grid-outer):not(#complete-screen) {
   border: 1px solid rgba(91,159,255,0.24);
   border-radius: 16px;
   box-shadow: 0 0 30px rgba(91,159,255,0.12);
+  position: relative;
+  z-index: 2;
 }
 
 .comp-restart-label {
@@ -628,6 +796,8 @@ body > *:not(.grid-outer):not(#complete-screen) {
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 0 40px rgba(0,0,0,0.28);
+  position: relative;
+  z-index: 2;
 }
 
 .lb-head {
@@ -716,6 +886,9 @@ body > *:not(.grid-outer):not(#complete-screen) {
   <div class="axis-labels-col"><div>A</div><div>B</div><div>C</div></div>
   <div class="axis-labels-row"><div>1</div><div>2</div><div>3</div></div>
   <div id="grid"></div>
+  <div class="solved-image-reveal" id="solved-image-reveal">
+    <img id="solved-image" alt="Solved puzzle image"/>
+  </div>
 </div>
 
 <!-- TIMER -->
@@ -736,6 +909,8 @@ body > *:not(.grid-outer):not(#complete-screen) {
     <div class="votes-empty">Waiting for vote window…</div>
   </div>
 </div>
+
+<div class="confetti-burst" id="celebration-layer"></div>
 
 <!-- COMPLETE -->
 <div id="complete-screen">
@@ -764,6 +939,8 @@ body > *:not(.grid-outer):not(#complete-screen) {
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const GRID = 3;
+const RESTART_TOTAL_MS = 30000;
+const COMPLETE_PANEL_DELAY_MS = 5000;
 const socket = io();
 
 let board        = [];
@@ -777,6 +954,82 @@ let timerDuration = 20000;
 let clockInterval = null;
 let roundStart    = null;
 let restartInterval = null;
+let completePanelTimeout = null;
+
+function buildConfettiBurst() {
+  const burst = document.getElementById("celebration-layer");
+  const colors = [
+    "rgba(74,240,196,0.95)",
+    "rgba(91,159,255,0.95)",
+    "rgba(255,200,69,0.95)",
+    "rgba(255,94,126,0.88)"
+  ];
+
+  burst.innerHTML = Array.from({ length: 96 }, (_, i) => {
+    const side = ["top", "right", "bottom", "left"][i % 4];
+    const size = `${8 + Math.random() * 12}px`;
+    const dur = `${3.2 + Math.random() * 2.2}s`;
+    const delay = `${Math.random() * 0.85}s`;
+    const color = colors[i % colors.length];
+    const spin = `${(Math.random() - 0.5) * 1080}deg`;
+    let left;
+    let top;
+    let dx;
+    let dy;
+
+    if (side === "top") {
+      left = `${Math.random() * 100}%`;
+      top = "-10vh";
+      dx = `${(Math.random() - 0.5) * 30}vw`;
+      dy = `${112 + Math.random() * 16}vh`;
+    } else if (side === "bottom") {
+      left = `${Math.random() * 100}%`;
+      top = "108vh";
+      dx = `${(Math.random() - 0.5) * 30}vw`;
+      dy = `-${112 + Math.random() * 16}vh`;
+    } else if (side === "left") {
+      left = "-8vw";
+      top = `${Math.random() * 100}%`;
+      dx = `${114 + Math.random() * 18}vw`;
+      dy = `${(Math.random() - 0.5) * 46}vh`;
+    } else {
+      left = "108vw";
+      top = `${Math.random() * 100}%`;
+      dx = `-${114 + Math.random() * 18}vw`;
+      dy = `${(Math.random() - 0.5) * 46}vh`;
+    }
+
+    return `<span class="confetti-piece" style="--left:${left};--top:${top};--dx:${dx};--dy:${dy};--spin:${spin};--size:${size};--dur:${dur};--delay:${delay};--color:${color}"></span>`;
+  }).join("");
+}
+
+function showSolvedImage() {
+  const reveal = document.getElementById("solved-image-reveal");
+  const img = document.getElementById("solved-image");
+  const gridOuter = document.querySelector(".grid-outer");
+
+  if (!currentImage) {
+    reveal.classList.remove("active");
+    gridOuter?.classList.remove("solved-reveal");
+    img.removeAttribute("src");
+    return;
+  }
+
+  img.src = `/images/${currentImage}`;
+  gridOuter?.classList.add("solved-reveal");
+  reveal.classList.remove("active");
+  void reveal.offsetWidth;
+  reveal.classList.add("active");
+}
+
+function hideSolvedImage() {
+  const reveal = document.getElementById("solved-image-reveal");
+  const img = document.getElementById("solved-image");
+  const gridOuter = document.querySelector(".grid-outer");
+  reveal.classList.remove("active");
+  gridOuter?.classList.remove("solved-reveal");
+  img.removeAttribute("src");
+}
 
 // ── RENDER GRID ───────────────────────────────────────────
 function renderGrid() {
@@ -890,6 +1143,19 @@ function stopRestartCountdown() {
   }
 }
 
+function resetCompleteFlow() {
+  if (completePanelTimeout) {
+    clearTimeout(completePanelTimeout);
+    completePanelTimeout = null;
+  }
+  stopRestartCountdown();
+  document.getElementById("complete-screen").classList.remove("show");
+  const celebrationLayer = document.getElementById("celebration-layer");
+  celebrationLayer.classList.remove("active");
+  celebrationLayer.innerHTML = "";
+  hideSolvedImage();
+}
+
 function startRestartCountdown(restartAt) {
   stopRestartCountdown();
   const target = Number(restartAt) || (Date.now() + 30000);
@@ -906,8 +1172,10 @@ function startRestartCountdown(restartAt) {
 }
 
 function showCompleteScreen(data) {
-  movableCells = [];
-  renderGrid();
+  const celebrationLayer = document.getElementById("celebration-layer");
+  celebrationLayer.classList.remove("active");
+  celebrationLayer.innerHTML = "";
+  hideSolvedImage();
   const m = Math.floor(data.elapsed / 60);
   const s = String(data.elapsed % 60).padStart(2, "0");
   document.getElementById("c-time").textContent = `${m}:${s}`;
@@ -920,6 +1188,28 @@ function showCompleteScreen(data) {
     </div>`).join("");
   startRestartCountdown(data.restartAt);
   document.getElementById("complete-screen").classList.add("show");
+}
+
+function startCompleteSequence(data) {
+  movableCells = [];
+  renderGrid();
+  resetCompleteFlow();
+  buildConfettiBurst();
+  showSolvedImage();
+  document.getElementById("celebration-layer").classList.add("active");
+
+  const solvedAt = Number(data.restartAt) - RESTART_TOTAL_MS;
+  const panelDelay = Math.max(0, COMPLETE_PANEL_DELAY_MS - Math.max(0, Date.now() - solvedAt));
+
+  if (panelDelay === 0) {
+    showCompleteScreen(data);
+    return;
+  }
+
+  completePanelTimeout = setTimeout(() => {
+    completePanelTimeout = null;
+    showCompleteScreen(data);
+  }, panelDelay);
 }
 
 // ── SOCKET EVENTS ─────────────────────────────────────────
@@ -936,10 +1226,9 @@ socket.on("state_sync", d => {
   renderGrid(); renderVotes();
   if (d.puzzleComplete && d.completeStats) {
     if (clockInterval) clearInterval(clockInterval);
-    showCompleteScreen(d.completeStats);
+    startCompleteSequence(d.completeStats);
   } else {
-    document.getElementById("complete-screen").classList.remove("show");
-    stopRestartCountdown();
+    resetCompleteFlow();
     startClock(d.roundStartTime);
   }
 });
@@ -949,8 +1238,7 @@ socket.on("new_puzzle", d => {
   currentImage = d.currentImage;
   movableCells = []; voteData = {};
   document.getElementById("stat-moves").textContent = "0";
-  document.getElementById("complete-screen").classList.remove("show");
-  stopRestartCountdown();
+  resetCompleteFlow();
   renderGrid(); renderVotes();
   startClock();
 });
@@ -1016,7 +1304,7 @@ socket.on("no_votes", d => {
 
 socket.on("puzzle_complete", d => {
   if (clockInterval) clearInterval(clockInterval);
-  showCompleteScreen(d);
+  startCompleteSequence(d);
 });
 </script>
 </body>
