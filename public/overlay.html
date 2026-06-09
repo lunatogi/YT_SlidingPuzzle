@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Sliding Puzzle</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
@@ -16,35 +17,55 @@
   --accent3:   #ffc845;
   --blue:      #5b9fff;
   --text:      #e8eef8;
-  --muted:     rgba(200,220,255,0.4);
+  --muted:     rgba(248,251,255,0.92);
   --glow-g:    0 0 20px rgba(74,240,196,0.4);
   --glow-r:    0 0 20px rgba(255,94,126,0.5);
   --glow-b:    0 0 16px rgba(91,159,255,0.35);
-  --grid-sz:   min(78vw, 78vh, 760px);
-  --panel-w:   min(82vw, 820px);
+  --stage-vw:  min(1vw, 0.5625vh);
+  --stage-vh:  min(1vh, 1.7778vw);
+  --grid-sz:   min(calc(var(--stage-vw) * 82), calc(var(--stage-vh) * 44), 860px);
+  --panel-w:   min(calc(var(--stage-vw) * 90), 920px);
   --gap:       6px;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
+html,
 body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  position: relative;
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--text);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #02050a;
+  isolation: isolate;
+}
+
+.stream-stage {
   position: relative;
   background:
     radial-gradient(circle at 50% 34%, rgba(74,240,196,0.2), transparent 20%),
     radial-gradient(circle at 50% 44%, rgba(91,159,255,0.22), transparent 34%),
     radial-gradient(circle at 50% 100%, rgba(8,15,28,0), rgba(8,15,28,0.78) 72%),
     linear-gradient(180deg, rgba(8,13,22,0.12) 0%, rgba(8,13,22,0.56) 100%);
-  font-family: 'Rajdhani', sans-serif;
-  color: var(--text);
-  width: 100vw;
-  height: 100vh;
+  width: min(100vw, 56.25vh);
+  height: min(100vh, 177.7778vw);
+  max-width: 1080px;
+  max-height: 1920px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: clamp(30px, 4vh, 56px) clamp(18px, 3vw, 34px) clamp(22px, 2vh, 30px);
-  gap: clamp(10px, 1.1vh, 16px);
+  padding: clamp(40px, calc(var(--stage-vh) * 4.8), 92px) clamp(18px, calc(var(--stage-vw) * 4), 44px) clamp(20px, calc(var(--stage-vh) * 2.4), 46px);
+  gap: clamp(10px, calc(var(--stage-vh) * 1), 18px);
+  box-shadow: 0 0 80px rgba(0,0,0,0.62);
   isolation: isolate;
 }
 
@@ -76,12 +97,12 @@ body::after {
   filter: blur(18px);
 }
 
-body > *:not(#complete-screen):not(#celebration-layer) {
+.stream-stage > *:not(#complete-screen):not(#celebration-layer) {
   position: relative;
   z-index: 1;
 }
 
-body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
+.stream-stage > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   backdrop-filter: blur(10px);
 }
 
@@ -98,50 +119,59 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 .header,
 .timer-wrap {
   border-radius: 16px;
-  padding: 14px 18px;
+  padding: clamp(16px, calc(var(--stage-vw) * 2.7), 28px) clamp(18px, calc(var(--stage-vw) * 3.3), 34px);
 }
 
 /* ── HEADER ─────────────────────────────────────────────── */
 .header {
   width: var(--panel-w);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin-top: clamp(10px, 1.5vh, 22px);
+  gap: clamp(14px, calc(var(--stage-vw) * 2.8), 30px);
+  margin-top: 0;
 }
 
-.title-block { display: flex; flex-direction: column; gap: 1px; }
+.title-block { min-width: 0; }
 
 .title {
   font-family: 'Orbitron', monospace;
   font-weight: 900;
-  font-size: clamp(38px, 3.4vw, 58px);
-  letter-spacing: 4px;
+  font-size: clamp(32px, calc(var(--stage-vw) * 4.25), 46px);
+  letter-spacing: 3px;
   color: var(--accent);
   text-shadow: var(--glow-g);
   line-height: 1;
+  white-space: nowrap;
 }
 
-.subtitle {
-  font-size: clamp(26px, 2vw, 40px);
-  letter-spacing: 3.5px;
+.vote-instruction {
+  width: var(--panel-w);
+  font-size: clamp(18px, calc(var(--stage-vw) * 2.35), 26px);
+  letter-spacing: 2.5px;
   color: var(--muted);
   text-transform: uppercase;
+  line-height: 1.2;
+  text-align: center;
+  margin-top: clamp(2px, calc(var(--stage-vh) * 0.2), 5px);
+  margin-bottom: clamp(0px, calc(var(--stage-vh) * 0.25), 5px);
 }
 
 .stats-block {
-  display: flex;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: clamp(14px, calc(var(--stage-vw) * 2.4), 26px);
+  align-items: end;
 }
 
 .stat {
   text-align: center;
+  min-width: clamp(48px, calc(var(--stage-vw) * 7), 76px);
 }
 
 .stat-label {
-  font-size: clamp(22px, 1.7vw, 32px);
-  letter-spacing: 2.5px;
+  font-size: clamp(15px, calc(var(--stage-vw) * 1.75), 19px);
+  letter-spacing: 2px;
   color: var(--muted);
   text-transform: uppercase;
   display: block;
@@ -149,7 +179,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .stat-value {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(34px, 2.8vw, 48px);
+  font-size: clamp(24px, calc(var(--stage-vw) * 3.2), 35px);
   font-weight: 700;
   color: var(--text);
   line-height: 1.1;
@@ -169,19 +199,19 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   width: var(--grid-sz);
   height: var(--grid-sz);
   flex-shrink: 0;
-  margin-top: clamp(18px, 2.5vh, 34px);
+  margin-top: clamp(20px, calc(var(--stage-vh) * 2.3), 44px);
 }
 
 .axis-labels-col {
   position: absolute;
-  top: -42px;
+  top: clamp(-48px, calc(var(--stage-vh) * -2.5), -32px);
   left: 0;
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   text-align: center;
   font-family: 'Orbitron', monospace;
-  font-size: clamp(28px, 2.4vw, 42px);
+  font-size: clamp(24px, calc(var(--stage-vw) * 4), 44px);
   font-weight: 700;
   color: var(--blue);
   letter-spacing: 2px;
@@ -190,14 +220,14 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .axis-labels-row {
   position: absolute;
-  left: -38px;
+  left: clamp(-42px, calc(var(--stage-vw) * -4), -28px);
   top: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
   font-family: 'Orbitron', monospace;
-  font-size: clamp(28px, 2.4vw, 42px);
+  font-size: clamp(24px, calc(var(--stage-vw) * 4), 44px);
   font-weight: 700;
   color: var(--blue);
   text-shadow: 0 0 18px rgba(91,159,255,0.5);
@@ -310,17 +340,17 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .cell-label {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: clamp(7px, calc(var(--stage-vw) * 1.2), 13px);
+  left: clamp(7px, calc(var(--stage-vw) * 1.2), 13px);
   font-family: 'Orbitron', monospace;
-  font-size: clamp(20px, 1.6vw, 30px);
+  font-size: clamp(17px, calc(var(--stage-vw) * 2.4), 26px);
   font-weight: 700;
   color: rgba(255,255,255,0.92);
   text-shadow: 0 2px 10px rgba(0,0,0,0.95);
   z-index: 4;
   transition: color 0.2s, text-shadow 0.2s;
   letter-spacing: 1px;
-  padding: 8px 12px;
+  padding: clamp(6px, calc(var(--stage-vw) * 0.9), 10px) clamp(9px, calc(var(--stage-vw) * 1.35), 15px);
   border-radius: 999px;
   background: rgba(6, 11, 18, 0.66);
   border: 1px solid rgba(255,255,255,0.12);
@@ -340,7 +370,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   width: var(--panel-w);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: clamp(10px, calc(var(--stage-vw) * 2), 20px);
 }
 
 .timer-track {
@@ -383,10 +413,10 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .timer-num {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(28px, 2vw, 38px);
+  font-size: clamp(24px, calc(var(--stage-vw) * 3.5), 38px);
   font-weight: 700;
   color: var(--accent);
-  min-width: 52px;
+  min-width: clamp(44px, calc(var(--stage-vw) * 6), 64px);
   text-align: right;
   transition: color 0.3s;
 }
@@ -399,34 +429,34 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 14px 18px;
-  min-height: 80px;
+  padding: clamp(14px, calc(var(--stage-vw) * 2.6), 28px) clamp(18px, calc(var(--stage-vw) * 3.3), 34px);
+  min-height: clamp(102px, calc(var(--stage-vh) * 9.5), 160px);
 }
 
 .votes-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 7px;
+  margin-bottom: clamp(10px, calc(var(--stage-vh) * 0.9), 16px);
 }
 
 .votes-title {
-  font-size: clamp(16px, 1.2vw, 22px);
-  letter-spacing: 3px;
+  font-size: clamp(18px, calc(var(--stage-vw) * 2.35), 26px);
+  letter-spacing: 2.7px;
   color: var(--muted);
   text-transform: uppercase;
   font-family: 'Orbitron', monospace;
 }
 
 .vote-hint {
-  font-size: clamp(16px, 1.2vw, 22px);
+  font-size: clamp(16px, calc(var(--stage-vw) * 2.15), 24px);
   color: var(--muted);
 }
 
 .vote-hint strong {
   color: var(--accent3);
   font-family: 'Orbitron', monospace;
-  font-size: clamp(16px, 1.2vw, 22px);
+  font-size: clamp(17px, calc(var(--stage-vw) * 2.25), 25px);
 }
 
 .votes-grid {
@@ -440,13 +470,13 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  min-width: 60px;
+  min-width: clamp(72px, calc(var(--stage-vw) * 15), 160px);
   flex: 1;
 }
 
 .vote-bar-track {
   width: 100%;
-  height: 34px;
+  height: clamp(32px, calc(var(--stage-vh) * 3.2), 56px);
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -474,7 +504,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   align-items: center;
   justify-content: center;
   font-family: 'Orbitron', monospace;
-  font-size: clamp(18px, 1.4vw, 26px);
+  font-size: clamp(17px, calc(var(--stage-vw) * 2.4), 26px);
   font-weight: 700;
   color: rgba(255,255,255,0.9);
   z-index: 1;
@@ -482,7 +512,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .vote-bar-label {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(15px, 1.1vw, 22px);
+  font-size: clamp(16px, calc(var(--stage-vw) * 2.25), 25px);
   font-weight: 700;
   color: var(--muted);
   letter-spacing: 1px;
@@ -493,45 +523,35 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 }
 
 .votes-empty {
-  font-size: clamp(18px, 1.3vw, 24px);
-  color: rgba(255,255,255,0.18);
+  font-size: clamp(18px, calc(var(--stage-vw) * 2.4), 26px);
+  color: var(--muted);
   font-style: italic;
   padding: 4px 0;
 }
 
-@media (max-aspect-ratio: 9/16) {
+@media (max-width: 700px), (max-aspect-ratio: 9/16) {
   :root {
-    --grid-sz: min(82vw, 52vh, 820px);
-    --panel-w: min(88vw, 860px);
+    --grid-sz: min(calc(var(--stage-vw) * 82), calc(var(--stage-vh) * 43), 820px);
+    --panel-w: min(calc(var(--stage-vw) * 90), 860px);
   }
 
-  body {
+  .stream-stage {
     justify-content: flex-start;
-    padding-top: clamp(18px, 2vh, 30px);
-  }
-
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .stats-block {
-    width: 100%;
-    justify-content: space-between;
+    padding-top: clamp(34px, calc(var(--stage-vh) * 4), 72px);
   }
 }
 
 /* ── COMPLETE SCREEN ─────────────────────────────────────── */
 #complete-screen {
   display: none;
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: rgba(8,11,18,0.97);
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: clamp(20px, 2.4vh, 36px);
-  padding: clamp(88px, 14vh, 184px) clamp(28px, 4vw, 56px) clamp(28px, 3vh, 44px);
+  gap: clamp(18px, calc(var(--stage-vh) * 2.2), 36px);
+  padding: clamp(76px, calc(var(--stage-vh) * 10), 176px) clamp(24px, calc(var(--stage-vw) * 4), 52px) clamp(26px, calc(var(--stage-vh) * 3), 48px);
   z-index: 200;
 }
 
@@ -590,7 +610,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 }
 
 .confetti-burst {
-  position: fixed;
+  position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
@@ -696,7 +716,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 .comp-badge {
   font-family: 'Orbitron', monospace;
   font-weight: 900;
-  font-size: clamp(22px, 1.8vw, 34px);
+  font-size: clamp(20px, calc(var(--stage-vw) * 3.1), 34px);
   letter-spacing: 8px;
   color: var(--accent3);
   text-transform: uppercase;
@@ -712,7 +732,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 .comp-title {
   font-family: 'Orbitron', monospace;
   font-weight: 900;
-  font-size: clamp(86px, 9vw, 180px);
+  font-size: clamp(74px, calc(var(--stage-vw) * 15), 162px);
   letter-spacing: 8px;
   color: var(--accent);
   text-shadow: var(--glow-g), 0 0 60px rgba(74,240,196,0.2);
@@ -724,15 +744,15 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .comp-meta {
   display: flex;
-  gap: clamp(24px, 3vw, 56px);
-  width: min(92vw, 1100px);
+  gap: clamp(18px, calc(var(--stage-vw) * 3), 42px);
+  width: min(calc(var(--stage-vw) * 92), 940px);
   justify-content: center;
   position: relative;
   z-index: 2;
 }
 
 .comp-restart {
-  width: min(92vw, 1100px);
+  width: min(calc(var(--stage-vw) * 92), 940px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -748,7 +768,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .comp-restart-label {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(20px, 1.5vw, 28px);
+  font-size: clamp(18px, calc(var(--stage-vw) * 2.5), 28px);
   letter-spacing: 3px;
   color: var(--muted);
   text-transform: uppercase;
@@ -756,7 +776,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .comp-restart-value {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(40px, 3vw, 64px);
+  font-size: clamp(34px, calc(var(--stage-vw) * 5.2), 58px);
   font-weight: 900;
   color: var(--blue);
   text-shadow: var(--glow-b);
@@ -766,7 +786,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 .comp-stat {
   text-align: center;
   flex: 1;
-  padding: clamp(18px, 2vw, 30px);
+  padding: clamp(16px, calc(var(--stage-vw) * 2.4), 28px);
   background: rgba(14,20,32,0.86);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -775,14 +795,14 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .comp-stat-val {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(56px, 5vw, 96px);
+  font-size: clamp(46px, calc(var(--stage-vw) * 8), 86px);
   font-weight: 700;
   color: var(--text);
   line-height: 1;
 }
 
 .comp-stat-lbl {
-  font-size: clamp(20px, 1.5vw, 30px);
+  font-size: clamp(18px, calc(var(--stage-vw) * 2.4), 28px);
   letter-spacing: 4px;
   color: var(--muted);
   text-transform: uppercase;
@@ -790,7 +810,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 }
 
 .lb-wrap {
-  width: min(92vw, 1100px);
+  width: min(calc(var(--stage-vw) * 92), 940px);
   background: rgba(14,20,32,0.9);
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -805,7 +825,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   background: var(--surface2);
   border-bottom: 1px solid var(--border);
   font-family: 'Orbitron', monospace;
-  font-size: clamp(20px, 1.6vw, 30px);
+  font-size: clamp(18px, calc(var(--stage-vw) * 2.6), 30px);
   letter-spacing: 4px;
   color: var(--muted);
   text-transform: uppercase;
@@ -829,7 +849,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 
 .lb-rank {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(40px, 3vw, 64px);
+  font-size: clamp(34px, calc(var(--stage-vw) * 5.4), 58px);
   font-weight: 900;
   min-width: 72px;
   text-align: center;
@@ -840,10 +860,10 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
 .lb-entry:nth-child(2) .lb-rank { color: #c8c8d0; }
 .lb-entry:nth-child(3) .lb-rank { color: #cd8860; }
 
-.lb-name { flex:1; font-size: clamp(28px, 2.2vw, 44px); font-weight: 600; letter-spacing: 0.5px; }
+.lb-name { flex:1; font-size: clamp(24px, calc(var(--stage-vw) * 3.6), 40px); font-weight: 600; letter-spacing: 0.5px; }
 .lb-votes {
   font-family: 'Orbitron', monospace;
-  font-size: clamp(24px, 1.8vw, 34px);
+  font-size: clamp(22px, calc(var(--stage-vw) * 3), 34px);
   color: var(--accent);
   font-weight: 700;
 }
@@ -854,18 +874,18 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   }
 
   .comp-title {
-    font-size: clamp(72px, 14vw, 140px);
+    font-size: clamp(66px, calc(var(--stage-vw) * 14), 132px);
   }
 }
 </style>
 </head>
 <body>
+<main class="stream-stage">
 
 <!-- HEADER -->
 <div class="header">
   <div class="title-block">
     <div class="title">SLIDEPUZZLE</div>
-    <div class="subtitle">Type !A1 · !B2 · !C3 to vote</div>
   </div>
   <div class="stats-block">
     <div class="stat">
@@ -890,6 +910,8 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
     <img id="solved-image" alt="Solved puzzle image"/>
   </div>
 </div>
+
+<div class="vote-instruction">Type !A1 · !B2 · !C3 to vote</div>
 
 <!-- TIMER -->
 <div class="timer-wrap">
@@ -936,6 +958,7 @@ body > *:not(.grid-outer):not(#complete-screen):not(#celebration-layer) {
   </div>
 </div>
 
+</main>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const GRID = 3;

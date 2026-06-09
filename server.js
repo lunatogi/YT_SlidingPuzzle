@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const YOUTUBE_CHANNEL_ID = "YOUR_CHANNEL_ID"; // ← replace with your YouTube channel ID
+const YOUTUBE_CHANNEL_ID = "UClF77uDe0GVZjtbiLqnk7cg"; // ← replace with your YouTube channel ID
 const VOTE_DURATION_MS = 20000;               // 20 seconds per round
 const RESTART_DELAY_MS = 30000;               // 30 seconds after puzzle completion
 const GRID_SIZE = 3;

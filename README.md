@@ -29,7 +29,8 @@ npm start
 ### 5. Add to OBS
 - Add a **Browser Source**
 - URL: `http://localhost:3000/overlay.html`
-- Width: `600`, Height: `700`
+- For a vertical phone stream, set Width: `1080`, Height: `1920`
+- For a lighter 720p vertical stream, use Width: `720`, Height: `1280`
 - Tick **"Refresh browser when scene becomes active"**
 
 ---
